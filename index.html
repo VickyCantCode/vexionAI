@@ -6,162 +6,117 @@
   <title>Vexion AI</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #0f0f0f;
-      color: #f1f1f1;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      align-items: center;
+      padding: 20px;
     }
 
-    header {
-      background-color: #1f1f1f;
-      padding: 1rem 2rem;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      border-bottom: 1px solid #333;
-      letter-spacing: 1px;
+    h1 {
+      color: #00ffd5;
+      margin-bottom: 20px;
     }
 
-    #chatbox {
-      flex: 1;
+    #chatBox {
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 15px;
       overflow-y: auto;
-      padding: 1.2rem;
+      margin-bottom: 15px;
     }
 
     .message {
-      margin: 1rem 0;
-      padding: 1rem;
-      border-radius: 12px;
-      max-width: 80%;
-      line-height: 1.6;
-      white-space: pre-wrap;
+      margin-bottom: 10px;
     }
 
     .user {
-      background-color: #272727;
-      align-self: flex-end;
-      text-align: right;
+      color: #00ff88;
     }
 
     .bot {
-      background-color: #1a1a1a;
-      align-self: flex-start;
+      color: #ffc107;
     }
 
-    #input-area {
-      display: flex;
-      padding: 1rem;
-      border-top: 1px solid #333;
-      background-color: #111;
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
     }
 
-    #message-input {
+    input {
       flex: 1;
-      padding: 0.8rem 1rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      margin-right: 0.6rem;
-      background-color: #1e1e1e;
-      color: #fff;
+      margin-right: 10px;
+      width: 70%;
     }
 
-    #send-btn {
-      padding: 0.8rem 1.2rem;
-      border: none;
-      background-color: #6e4fff;
-      color: white;
-      border-radius: 8px;
+    button {
+      background: #00ffd5;
+      color: #000;
       cursor: pointer;
-      font-weight: bold;
     }
 
-    #send-btn:hover {
-      background-color: #8e6eff;
-    }
-
-    .typing {
-      font-style: italic;
-      opacity: 0.7;
-    }
-
-    @media (max-width: 600px) {
-      header {
-        font-size: 1.2rem;
-      }
-      .message {
-        font-size: 0.95rem;
-      }
+    #inputContainer {
+      display: flex;
+      width: 100%;
+      max-width: 600px;
     }
   </style>
 </head>
 <body>
-
-  <header>🤖 Vexion AI</header>
-
-  <div id="chatbox"></div>
-
-  <div id="input-area">
-    <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off" />
-    <button id="send-btn">Send</button>
+  <h1>DeepSeek Chat</h1>
+  <div id="chatBox"></div>
+  <div id="inputContainer">
+    <input type="text" id="userInput" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
   </div>
 
   <script>
-    const chatbox = document.getElementById("chatbox");
-    const input = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-btn");
+    const chatBox = document.getElementById("chatBox");
 
-    function appendMessage(content, className) {
-      const msg = document.createElement("div");
-      msg.className = `message ${className}`;
-      msg.textContent = content;
-      chatbox.appendChild(msg);
-      chatbox.scrollTop = chatbox.scrollHeight;
+    function appendMessage(text, sender) {
+      const div = document.createElement("div");
+      div.classList.add("message", sender);
+      div.textContent = `${sender === 'user' ? 'You' : 'Vexion'}: ${text}`;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     async function sendMessage() {
+      const input = document.getElementById("userInput");
       const message = input.value.trim();
       if (!message) return;
 
       appendMessage(message, "user");
       input.value = "";
 
-      const loadingMsg = document.createElement("div");
-      loadingMsg.className = "message bot typing";
-      loadingMsg.textContent = "Vexion is thinking...";
-      chatbox.appendChild(loadingMsg);
-      chatbox.scrollTop = chatbox.scrollHeight;
-
       try {
-        const res = await fetch("https://vexionAI-api.nakkavikasyadav.repl.co/chat", {
+        const response = await fetch("https://037a1113-ddd1-41f1-9df9-be5a16fde1c6-00-7jeclkop0j7a.pike.replit.dev/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: message })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message })
         });
 
-        const data = await res.json();
-        chatbox.removeChild(loadingMsg);
-
-        if (data && data.choices && data.choices[0] && data.choices[0].message) {
-          appendMessage(data.choices[0].message.content, "bot");
+        const data = await response.json();
+        if (data.reply) {
+          appendMessage(data.reply, "bot");
         } else {
-          appendMessage("⚠️ Unexpected response from Vexion.", "bot");
+          appendMessage("Error: Unexpected response", "bot");
         }
       } catch (err) {
+        appendMessage("Error: Couldn't reach the server", "bot");
         console.error(err);
-        chatbox.removeChild(loadingMsg);
-        appendMessage("❌ Failed to reach Vexion backend.", "bot");
       }
     }
-
-    sendBtn.addEventListener("click", sendMessage);
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter") sendMessage();
-    });
   </script>
-
 </body>
 </html>
